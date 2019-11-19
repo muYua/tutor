@@ -1,0 +1,62 @@
+#application:yml
+
+#debug可以打印自动配置报告（自动配置生效的）
+#debug: true
+
+
+#关闭spring默认logo：spring.mvc.favicon.enabled=false
+###jdbc配置
+jdbc-username: root
+jdbc-pswd: IZUMIeita@mysql24
+jdbc-url: jdbc:mysql://www.izumieita.cn:3306/tutor?useUnicode=true&characterEncoding=utf-8&autoReconnect=true&failOverReadOnly=false&zeroDateTimeBehavior=convertToNull
+jdbc-driverClass: com.mysql.cj.jdbc.Driver
+
+###tomcat端口
+server:
+  port: 9998
+  servlet:
+###配置项目的访问路径    context-path: /tutor
+
+spring:
+###DataSource,c3p0数据池
+  datasource:
+    type: com.mchange.v2.c3p0.ComboPooledDataSource
+    user: ${jdbc-username:root}
+    password: ${jdbc-pswd:123456}
+    driverClass: ${jdbc-driverClass:com.mysql.cj.jdbc.Driver}
+    jdbcUrl: ${jdbc-url:jdbc:mysql://127.0.0.1:3306/tutor?useUnicode=true&characterEncoding=utf8&autoReconnect=true&failOverReadOnly=false&zeroDateTimeBehavior=convertToNull}
+    minPoolSize: 2
+    maxPoolSize: 10
+    maxIdleTime: 1800000
+    acquireIncrement: 3
+    maxStatements: 1000
+    initialPoolSize: 3
+    idleConnectionTestPeriod: 60
+    acquireRetryAttempts: 30
+    acquireRetryDelay: 1000
+    breakAfterAcquireFailure: false
+    testConnectionOnCheckout: false
+###SpringMVC
+#  mvc:
+#    view:
+#      prefix: /tutor/WEB-INF/jsp/
+#      suffix: .jsp
+#    ##关闭的spring默认logo#    favicon:#      enabled: false
+###JPA
+  jpa:
+    show-sql: true #启用SQL语句的日志记录
+    database-platform: org.hibernate.dialect.MySQL5InnoDBDialect #设置方言
+    hibernate:
+      ddl-auto: update #DDL模式，hibernate:hbm2ddl:auto 
+
+###logging日志
+##logging.path与logging.file有一定的冲突，一般以logging.file为准
+#logging:#  path: 指定目录（默认文件名spring.log）
+#  file: 指定文件名（可以指定路径）
+
+#应用程序的上下文路径。
+#server:servlet:context-path : 
+#用于静态资源的路径模式。
+#spring:mvc:static-path-pattern : / ** 
+
+

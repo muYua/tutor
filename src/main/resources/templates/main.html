@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>后台管理</title>
+<script type="text/javascript" src="/tutor/js/jquery-3.4.1.min.js"></script>
+<style type="text/css">
+.search>input[type=text]{
+	width: 300px;
+}
+</style>
+</head>
+<body>
+	<p style="color: blue;">这里是后台管理。。</p>
+	<a href="./" onclick="logout()">注销</a>
+	<div style="background: #555;margin: 15px;text-align: center;width: 100%">
+		<label style="color: orange;">添加用户</label><br>
+		<input type="text" id="add-user-name" placeholder="这里输入添加的用户账号"><br>
+		<input type="text" id="add-user-pswd" placeholder="这里输入用户密码" onkeypress="enterAddUser()"><br>
+		<input type="button" value="确定" onclick="addUser()">
+	</div>
+	
+	<div  class="search" style="background: #555;text-align: center; margin: 15px;width: 100%">
+		<label style="color: orange;">Search</label>
+		<select>
+			<option value="0">准确查询</option>
+			<option value="1">模糊查询</option>
+			<option value="2">姓氏查询</option>
+		</select>
+		<input type="text" placeholder="请输入你要查询的条件，注意只支账号的查询" onkeypress="searchUser(this)">
+	</div>
+	
+	<div style="text-align: center;">
+		<label style="color: blue;">用户表</label>&nbsp;
+		<a href="javascript:;" onclick="flush()">刷新</a><br>
+		<table style="display: inline;">
+			<thead>
+				<tr><th>编号</th><th>用户ID</th><th>用户账号</th><th>用户密码</th><th>操作</th></tr>
+			</thead>
+			<tbody id="user_content"></tbody>		
+		</table>
+	</div>
+
+	<div style="background: #555;margin: 15px;text-align: center;width: 100%">
+		<label style="color: orange;">添加管理员</label><br>
+		<input type="text" id="add-admin-name" placeholder="这里输入添加的管理员账号"><br>
+		<input type="text" id="add-admin-pswd" placeholder="这里输入管理员密码" onkeypress="enterAddAdmin()"><br>
+		<input type="button" value="确定" onclick="addAdmin()">
+	</div>
+	
+	<div class="search" style="background: #555;text-align: center; margin: 15px;width: 100%">
+		<label style="color: orange;">Search</label>
+		<select>
+			<option value="0">准确查询</option>
+			<option value="1">模糊查询</option>
+			<option value="2">姓氏查询</option>
+		</select>
+		<input type="text" placeholder="请输入你要查询的条件，注意只支持账号的查询" onkeypress="searchAdmin()">
+	</div>
+	
+	<div style="text-align: center;">
+		<label style="color: blue;">管理员表</label>&nbsp;
+		<a href="javascript:;" onclick="flush()">刷新</a><br>
+		<table  style="display: inline;">
+			<thead>
+				<tr><th>编号</th><th>管理员ID</th><th>管理员账号</th><th>管理员密码</th><th>操作</th></tr>
+			</thead>
+			<tbody id="admin_content"></tbody>
+		</table>
+	</div>
+	<script type="text/javascript">
+		/* 加载页面时，数据刷新 */
+		window.onload=function(){
+			$.ajax('./admin/getUsers',{
+				data:{},
+				dataType:'json',//服务器返回json格式数据
+				type:'get',//HTTP请求类型
+				timeout:10000,//超时时间设置为10秒；
+				success:function(data){
+					console.log(data.obj);
+					var flag = data.success;
+					var userList = data.obj;
+					var tableContent = "";
+					if(flag){
+						$.each(userList, function(i, user){
+							/* 通过String.raw``获取``中的原字符串  */
+			                tableContent += String.raw`<tr>
+								<td>${i+1}</td>
+								<td>${user.id}</td>
+			                	<td id="${'userName'+user.id}">${user.userName}</td>
+			                	<td id="${'userPswd'+user.id}">${user.password}</td>
+			                	<td><a href="javascript:;" onclick="delUser(${user.id})">删除</a>&nbsp;
+			                	<a href="javascript:;" onclick="updateUser(${user.id},'${user.userName}','${user.password}',this)">修改</a></td>
+			                </tr>`;
+						});
+						$("#user_content").html(tableContent);
+					}	
+					else{
+						alert("获取用户信息失败！！")
+					}
+				},
+				error:function(xhr,type,errorThrown){
+					alert("获取用户信息失败,请与管理员联系。");
+					console.log(xhr);
+					console.log(type);
+					console.log(errorThrown);
+				}
+			});//end ajax
+			
+			$.ajax('./admin/getAdmins',{
+				data:{},
+				dataType:'json',//服务器返回json格式数据
+				type:'get',//HTTP请求类型
+				timeout:10000,//超时时间设置为10秒；
+				success:function(data){
+					console.log(data.obj);
+					var flag = data.success;
+					var adminList = data.obj;
+					var tableContent = "";
+					if(flag){
+						$.each(adminList, function(i, admin){
+							/* 通过String.raw``获取``中的原字符串  */
+			                tableContent += String.raw`<tr>
+								<td>${i+1}</td>
+								<td>${admin.id}</td>
+			                	<td id="${'adminName'+admin.id}">${admin.name}</td>
+			                	<td id="${'adminPswd'+admin.id}">${admin.password}</td>
+			                	<td><a href="javascript:;" onclick="delAdmin(${admin.id})">删除</a>&nbsp;
+			                	<a href="javascript:;" onclick="updateAdmin(${admin.id},'${admin.name}','${admin.password}',this)">修改</a></td>
+			                </tr>`;
+						});
+						$("#admin_content").html(tableContent);
+					}	
+					else{
+						alert("获取管理员信息失败！！")
+					}
+				},
+				error:function(xhr,type,errorThrown){
+					alert("获取管理员信息失败,请与管理员联系。");
+					console.log(xhr);
+					console.log(type);
+					console.log(errorThrown);
+				}
+			});//end ajax
+		}	
+	</script>
+	<script type="text/javascript">
+		/* 删除 */
+		function delUser(id){
+			$.ajax("./admin/delUser",{
+				data:{
+					id:id
+				},
+				dataType:'json',//服务器返回json格式数据
+				type:'delete',//HTTP请求类型
+				timeout:10000,//超时时间设置为10秒；
+				success:function(data){
+					var flag = data.success;
+					if(flag){
+						alert("删除用户信息成功！");
+						//重新加载main界面
+						window.location.href = 'main';
+					}	
+					else{
+						alert("删除用户失败！！")
+					}
+				},
+				error:function(xhr,type,errorThrown){
+					alert("更新用户信息失败,请与管理员联系。");
+					console.log(xhr);
+					console.log(type);
+					console.log(errorThrown);
+				}
+			}); //end ajax
+		}
+		
+		function delAdmin(id){
+			$.ajax("./admin/delAdmin",{
+				data:{
+					id:id
+				},
+				dataType:'json',//服务器返回json格式数据
+				type:'delete',//HTTP请求类型
+				timeout:10000,//超时时间设置为10秒；
+				success:function(data){
+					var flag = data.success;
+					if(flag){
+						alert("删除管理员信息成功！");
+						//重新加载main界面
+						window.location.href = 'main';
+					}	
+					else{
+						alert("删除管理员信息失败！！");
+					}
+				},
+				error:function(xhr,type,errorThrown){
+					alert("删除管理员信息失败,请与管理员联系。");
+					console.log(xhr);
+					console.log(type);
+					console.log(errorThrown);
+				}
+			});//end ajax 
+		}
+	</script>
+	<script type="text/javascript">
+		/* 添加 */
+		function addUser(){
+			var pattern =/^[^\s'"+%?\\\/]+$/;
+			var p_u = pattern.test($("#add-user-name")[0].value);
+			var p_p = pattern.test($("#add-user-pswd")[0].value);
+			if(p_u&&p_p){
+				$.ajax("./admin/addUser",{
+					data:{
+						name:$("#add-user-name").val(),
+						pswd:$("#add-user-pswd").val()
+					},
+					dataType:'json',//服务器返回json格式数据
+					type:'post',//HTTP请求类型
+					timeout:10000,//超时时间设置为10秒；
+					success:function(data){
+						var flag = data.success;
+						if(flag){
+							alert("添加用户信息成功！");
+							//重新加载main界面
+							window.location.href = 'main';
+						}	
+						else{
+							alert("添加用户信息失败！！")
+						}
+					},
+					error:function(xhr,type,errorThrown){
+						alert("更新用户信息失败,请与管理员联系。");
+						console.log(xhr);
+						console.log(type);
+						console.log(errorThrown);
+					}
+				});//end ajax
+			}
+			else{
+				alert("数据不合法！");
+			}
+		}
+		
+		function addAdmin(){
+			var pattern =/^[^\s'"+%?\\\/]+$/;
+			var p_u = pattern.test($("#add-admin-name")[0].value);
+			var p_p = pattern.test($("#add-admin-pswd")[0].value);
+			if(p_u&&p_p){
+				$.ajax("./admin/addAdmin",{
+					data:{
+						name:$("#add-admin-name").val(),
+						pswd:$("#add-admin-pswd").val()
+					},
+					dataType:'json',//服务器返回json格式数据
+					type:'post',//HTTP请求类型
+					timeout:10000,//超时时间设置为10秒；
+					success:function(data){
+						var flag = data.success;
+						if(flag){
+							alert("添加管理员信息成功！");
+							//重新加载main界面
+							window.location.href = 'main';
+						}	
+						else{
+							alert("添加管理员信息失败！！")
+						}
+					},
+					error:function(xhr,type,errorThrown){
+						alert("添加管理员信息失败,请与管理员联系。");
+						console.log(xhr);
+						console.log(type);
+						console.log(errorThrown);
+					}
+				});//end ajax
+			}
+			else{
+				alert("数据不合法！");
+			}
+		}
+		//回车提交判断
+		function enterAddUser(){
+			if (event.keyCode == 13) { //判断是否按下回车
+				addUser();
+			}
+		}
+		function enterAddAdmin(){
+			if (event.keyCode == 13) { //判断是否按下回车
+				addAdmin();
+			}
+		}
+	</script>
+	<script type="text/javascript">
+		/* 修改用户 */
+		function updateUser(id,name,pswd,dom){
+			//初始化修改输入框input的id
+			var inputNameId = "update-user-name"+id;
+			var inputPswdId = "update-user-pswd"+id;
+			//构造替换的DOM
+			var inputName = `<input type="text" id=${inputNameId} placeholder="${name}">`;
+			var inputPswd = `<input type="text" id=${inputPswdId} placeholder="${pswd}">`;
+			var submitUpdate = `<a href="javascript:;" onclick="submitUpdateUser(${id},'${name}','${pswd}')">确定</a>`;
+			var cancelUpdate = `<a href="javascript:;" onclick="flush()">取消</a>`
+			//获取数据项td的id
+			var inputUserName = '#userName'+id;
+			var inputUserPswd = '#userPswd'+id;
+			//将td中的内容替换为input
+			$(inputUserName).html(inputName);
+			$(inputUserPswd).html(inputPswd);
+			//替换<a>修改之前的<a>取消#注意顺序，一定是在dom替换之前替换<a>取消（基于dom<a>修改的定位）
+			//console.log("----:");
+			//console.log($(dom).prev().get(0));
+			$(dom).prev().replaceWith(cancelUpdate);
+			//将选中的<a>标签DOM替换为新的<a>标签submitUpdate
+			$(dom).replaceWith(submitUpdate);
+		}
+		function submitUpdateUser(id,name,pswd){
+			//获取修改输入框input的id，并为$()的调用做好准备
+			var updateUserNameId = "#update-user-name"+id;
+			var updateUserPswdId = "#update-user-pswd"+id;
+			//获取修改的内容
+			var updateUserName = $(updateUserNameId).val();
+			var updateUserPswd = $(updateUserPswdId).val();
+			//对获取到的数据进行判断、处理
+			//判空,$.trim()删除字符串开始和末尾的空格
+			if(updateUserName == null || $.trim(updateUserName).length == 0)
+				updateUserName = name;
+			if(updateUserPswd == null || $.trim(updateUserPswd).length == 0)
+				updateUserPswd = pswd;
+			//如果修改了数据
+			if(updateUserName != name || updateUserPswd !=pswd){
+				var pattern =/^[^\s'"+%?\\\/]+$/;
+				var p_u = pattern.test(updateUserName);
+				var p_p = pattern.test(updateUserPswd);
+				if(p_u&&p_p){
+					$.ajax("./admin/updateUser",{
+						data:{
+							id:id,
+							name:updateUserName,
+							pswd:updateUserPswd
+						},
+						dataType:'json',//服务器返回json格式数据
+						type:'put',//HTTP请求类型
+						timeout:10000,//超时时间设置为10秒；
+						success:function(data){
+							var flag = data.success;
+							if(flag){
+								alert("更新用户信息成功！");
+								//重新加载main界面
+								window.location.href = 'main';
+							}	
+							else{
+								alert("更新用户信息失败！！")
+							}
+						},
+						error:function(xhr,type,errorThrown){
+							alert("更新用户信息失败,请与管理员联系。");
+							console.log(xhr);
+							console.log(type);
+							console.log(errorThrown);
+						}
+					});//end ajax
+				}
+				else{
+					alert("数据不合法！");
+				}
+			}
+			else{
+				alert("你没有修改任何数据！");
+			}	
+		}
+		
+		/* 修改管理员 */
+		function updateAdmin(id,name,pswd,dom){
+			//初始化修改输入框input的id
+			var inputNameId = "update-admin-name"+id;
+			var inputPswdId = "update-admin-pswd"+id;
+			//构造替换的DOM
+			var inputName = `<input type="text" id=${inputNameId} placeholder="${name}">`;
+			var inputPswd = `<input type="text" id=${inputPswdId} placeholder="${pswd}">`;
+			var submitUpdate = `<a href="javascript:;" onclick="submitUpdateAdmin(${id},'${name}','${pswd}')">确定</a>`;
+			var cancelUpdate = `<a href="javascript:;" onclick="flush()">取消</a>`
+			//获取数据项td的id
+			var inputAdminName = '#adminName'+id;
+			var inputAdminPswd = '#adminPswd'+id;
+			//将td中的内容替换为input
+			$(inputAdminName).html(inputName);
+			$(inputAdminPswd).html(inputPswd);
+			//替换<a>修改之前的<a>取消
+			$(dom).prev().replaceWith(cancelUpdate);
+			//将选中的<a>标签DOM替换为新的<a>标签submitUpdate
+			$(dom).replaceWith(submitUpdate);
+		}
+		function submitUpdateAdmin(id,name,pswd){
+			//获取修改输入框input的id，并为$()的调用做好准备
+			var updateAdminNameId = "#update-admin-name"+id;
+			var updateAdminPswdId = "#update-admin-pswd"+id;
+			//获取修改的内容
+			var updateAdminName = $(updateAdminNameId).val();
+			var updateAdminPswd = $(updateAdminPswdId).val();
+			//对获取到的数据进行判断、处理
+			//判空,$.trim()删除字符串开始和末尾的空格
+			if(updateAdminName == null || $.trim(updateAdminName).length == 0)
+				updateAdminName = name;
+			if(updateAdminPswd == null || $.trim(updateAdminPswd).length == 0)
+				updateAdminPswd = pswd;
+			//如果修改了数据
+			if(updateAdminName != name || updateAdminPswd !=pswd){
+				var pattern =/^[^\s'"+%?\\\/]+$/;
+				var p_u = pattern.test(updateAdminName);
+				var p_p = pattern.test(updateAdminPswd);
+				if(p_u&&p_p){
+					$.ajax("./admin/updateAdmin",{
+						data:{
+							id:id,
+							name:updateAdminName,
+							pswd:updateAdminPswd
+						},
+						dataType:'json',//服务器返回json格式数据
+						type:'put',//HTTP请求类型
+						timeout:10000,//超时时间设置为10秒；
+						success:function(data){
+							var flag = data.success;
+							if(flag){
+								alert("更新管理员信息成功！");
+								//重新加载main界面
+								window.location.href = 'main';
+							}	
+							else{
+								alert("更新管理员信息失败！！")
+							}
+						},
+						error:function(xhr,type,errorThrown){
+							alert("更新管理员信息失败,请与管理员联系。");
+							console.log(xhr);
+							console.log(type);
+							console.log(errorThrown);
+						}
+					});//end ajax
+				}
+				else{
+					alert("数据不合法！");					
+				}
+			}
+			else{
+				alert("你没有修改任何数据！");
+			}	
+		}
+	</script>
+	<script>
+		/* 条件查询 */
+		function searchUser(dom){
+			if (event.keyCode == 13) { //判断是否按下回车
+				console.log($(dom));
+				//attr()获取属性
+				//获取t同胞元素（JQuery对象）
+				var selectDom = $(dom).siblings("select");//$(dom).siblings("select")[0] ==>得到一个DOM
+				console.log(selectDom);
+				//获取option的value值，通过控制台console的打印获取属性等
+				var key = selectDom.val();
+				console.log("value="+key);
+				//获取input输入框的值
+				var name = $(dom).val();
+				console.log("name="+name);
+				var pattern =/^[^\s'"+%?\\\/]+$/;
+				var p_k = pattern.test(key);
+				var p_n = pattern.test(name);
+				if(p_k&&p_n){
+					$.ajax("./admin/searchUser",{
+						data:{
+							key:key,
+							name:$.trim(name)
+						},
+						dataType:'json',//服务器返回json格式数据
+						type:'get',//HTTP请求类型
+						timeout:10000,//超时时间设置为10秒；
+						success:function(data){
+							var flag = data.success;
+							var users = data.obj;
+							var tableContent = "";
+							if(flag){
+								if(users.length==0){//如果数据为空
+									//移除thead
+									$("#user_content").siblings("thead").remove();
+									//在table外加上<p>消息->得到父元素table->在table前加一个<p>标签
+									$("#user_content").parent().before("<p style='color:red;'>没有找到符合条件的信息。</p>");
+								}
+								
+								$.each(users, function(i, user){
+									/* 通过String.raw``获取``中的原字符串  */
+					                tableContent += String.raw`<tr>
+										<td>${i+1}</td>
+										<td>${user.id}</td>
+					                	<td id="${'userName'+user.id}">${user.userName}</td>
+					                	<td id="${'userPswd'+user.id}">${user.password}</td>
+					                	<td><a href="javascript:;" onclick="delUser(${user.id})">删除</a>&nbsp;
+					                	<a href="javascript:;" onclick="updateUser(${user.id},'${user.userName}','${user.password}',this)">修改</a></td>
+					                </tr>`;
+								});
+								$("#user_content").html(tableContent);				
+							}	
+							else{
+								alert("搜索信息失败！！")
+							}
+						},
+						error:function(xhr,type,errorThrown){
+							alert("搜索信息失败,请与管理员联系。");
+							console.log(xhr);
+							console.log(type);
+							console.log(errorThrown);
+						}
+					});//end ajax
+				}
+				else{
+					alert("数据不合法！");
+				}
+		    }
+		}
+		
+		function searchAdmin(dom){
+			if (event.keyCode == 13) { //判断是否按下回车
+				console.log($(dom));
+				//attr()获取属性
+				//获取t同胞元素（JQuery对象）
+				var selectDom = $(dom).siblings("select");//$(dom).siblings("select")[0] ==>得到一个DOM
+				console.log(selectDom);
+				//获取option的value值，通过控制台console的打印获取属性等
+				var key = selectDom.val();
+				console.log("value="+key);
+				//获取input输入框的值
+				var name = $(dom).val();
+				console.log("name="+name);
+				var pattern =/^[^\s'"+%?\\\/]+$/;
+				var p_k = pattern.test(key);
+				var p_n = pattern.test(name);
+				if(p_k&&p_n){
+					$.ajax("./admin/searchAdmin",{
+						data:{
+							key:key,
+							name:$.trim(name)
+						},
+						dataType:'json',//服务器返回json格式数据
+						type:'get',//HTTP请求类型
+						timeout:10000,//超时时间设置为10秒；
+						success:function(data){
+							var flag = data.success;
+							var admins = data.obj;
+							var tableContent = "";
+							if(flag){
+								if(admins.length==0){//如果数据为空
+									//移除thead
+									$("#admin_content").siblings("thead").remove();
+									//在table外加上<p>消息->得到父元素table->在table前加一个<p>标签
+									$("#admin_content").parent().before("<p style='color:red;'>没有找到符合条件的信息。</p>");
+								}
+								
+								$.each(admins, function(i, admin){
+									/* 通过String.raw``获取``中的原字符串  */
+					                tableContent += String.raw`<tr>
+										<td>${i+1}</td>
+										<td>${admin.id}</td>
+					                	<td id="${'adminName'+admin.id}">${admin.name}</td>
+					                	<td id="${'adminPswd'+admin.id}">${admin.password}</td>
+					                	<td><a href="javascript:;" onclick="delAdmin(${admin.id})">删除</a>&nbsp;
+					                	<a href="javascript:;" onclick="updateAdmin(${admin.id},'${admin.name}','${admin.password}',this)">修改</a></td>
+					                </tr>`;
+								});
+								$("#admin_content").html(tableContent);			
+							}	
+							else{
+								alert("搜索信息失败！！")
+							}
+						},
+						error:function(xhr,type,errorThrown){
+							alert("搜索信息失败,请与管理员联系。");
+							console.log(xhr);
+							console.log(type);
+							console.log(errorThrown);
+						}
+					});//end ajax
+				}
+				else{
+					alert("数据不合法！");
+				}
+		    }
+		}
+	</script>
+	<script type="text/javascript">
+		/* 刷新页面 */
+		function flush(){
+			window.location.reload();
+		}
+		/* 注销 */
+		function logout(){
+			//session数据删除
+		}
+	</script>
+</body>
+</html>

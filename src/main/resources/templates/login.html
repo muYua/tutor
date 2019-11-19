@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>登录</title>
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="stylesheet" type="text/css" href="/tutor/css/t.css">
+<script type="text/javascript" src="/tutor/js/jquery-3.4.1.min.js"></script>
+</head>
+<body>
+	<h1 style="color: aqua;">欢迎来到后台登录页面！</h1>
+	<input type="text" id="name" placeholder="请输入管理员账号">
+	<br>
+	<input type="password" id="pswd" placeholder="请输入管理员密码">
+	<br>
+	<input type="submit" value="登录" onclick="login()">
+	<script type="text/javascript">
+		function login() {
+			$.ajax('./admin/login',{
+				data:{
+					name:$("#name").val(),
+					pswd:$("#pswd").val()
+				},
+				dataType:'json',//服务器返回json格式数据
+				type:'get',//HTTP请求类型
+				timeout:10000,//超时时间设置为10秒；
+				success:function(data){
+					console.log(data.obj);
+					var flag = data.success;
+					if(flag){
+						alert("恭喜您，登录成功！！");
+						//跳转登录页面
+						window.location.href = 'main';
+					}	
+					else{
+						alert("登录失败！！")
+					}
+				},
+				error:function(xhr,type,errorThrown){
+					console.log()
+					console.log(type);
+				}
+			});
+		}
+	</script>
+</body>
+</html>
